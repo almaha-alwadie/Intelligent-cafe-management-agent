@@ -473,17 +473,17 @@ def load_css():
     """, unsafe_allow_html=True)
 
 
-# BANNER
+# BANNER (مع تعديل use_container_width إلى use_column_width)
 
 def show_banner(image_path: Path, default_url: str):
     if image_path.exists():
         try:
             img = Image.open(image_path)
-            st.image(img, use_container_width=True)
+            st.image(img, use_column_width=True)  # تم التعديل
             return True
         except Exception as e:
             st.warning(f"Local image could not be loaded: {e}. Using online image instead.")
-    st.image(default_url, use_container_width=True)
+    st.image(default_url, use_column_width=True)  # تم التعديل
     return False
 
 
