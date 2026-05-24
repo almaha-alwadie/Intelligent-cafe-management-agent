@@ -1,0 +1,18 @@
+item,category,initial_stock,current_stock,minimum_level,unit,cost_per_unit,supplier_id,last_restock_date,status,lead_time_days
+Coffee Beans,coffee,42,42,7,kg,12.5,3,2026-01-04,In Stock,10
+Espresso Beans,coffee,113,113,12,kg,14.0,3,2026-01-15,In Stock,7
+Ice Cubes,cold_items,26,26,16,kg,0.3,5,2026-04-11,In Stock,12
+Almond Milk,dairy,23,23,13,liter,2.5,1,2026-02-23,In Stock,1
+Condensed Milk,dairy,71,71,11,can,1.5,1,2026-04-30,In Stock,1
+Milk,dairy,74,74,20,liter,1.8,1,2026-03-03,In Stock,1
+Blueberry Muffin,dessert,66,66,16,pcs,0.9,4,2026-01-31,In Stock,2
+Brownie,dessert,85,85,8,pcs,1.0,4,2026-03-08,In Stock,3
+Cheesecake Slice,dessert,112,112,20,pcs,1.7,4,2026-01-03,In Stock,2
+Chocolate Cake,dessert,6,6,7,pcs,1.5,4,2026-01-30,Low Stock,5
+Donut,dessert,85,85,7,pcs,0.7,4,2026-03-03,In Stock,4
+Croissant,pastry,119,119,7,pcs,0.8,4,2026-01-01,In Stock,2
+Sugar,sweetener,112,112,20,kg,1.2,2,2026-04-06,In Stock,8
+Caramel Syrup,syrup,113,113,12,bottle,4.0,2,2026-02-19,In Stock,4
+Chocolate Syrup,syrup,116,116,9,bottle,4.5,2,2026-03-01,In Stock,3
+Vanilla Syrup,syrup,82,82,7,bottle,4.0,2,2026-03-24,In Stock,4
+Whipped Cream,topping,67,67,12,pcs,3.0,2,2026-03-01,In Stock,2

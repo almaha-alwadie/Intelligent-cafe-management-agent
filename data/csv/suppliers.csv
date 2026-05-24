@@ -1,0 +1,6 @@
+supplier_id,supplier_name,contact_person,email,phone,city,country,supplied_categories
+1,Swiss Dairy Supply,Anna Muller,orders@swissdairy.ch,+41 44 123 4567,Zurich,Switzerland,"milk,cream,dairy"
+2,Alpine Sweeteners AG,Lukas Meier,sales@alpinesweets.ch,+41 22 234 5678,Geneva,Switzerland,"sugar,syrups,toppings"
+3,Coffee Bean Traders GmbH,Sophie Keller,orders@coffeebeantraders.ch,+41 61 345 6789,Basel,Switzerland,"coffee_beans,espresso,roasting"
+4,Bakery Essentials Suisse,Noah Fischer,support@bakerysuisse.ch,+41 31 456 7890,Bern,Switzerland,"pastries,bread,bakery_ingredients"
+5,Frozen Fresh Logistics,Emma Schmid,logistics@frozenfresh.ch,+41 52 567 8901,Lausanne,Switzerland,"ice,frozen_items,cold_storage"

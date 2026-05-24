@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly
+chromadb
+sentence-transformers
+groq
+pdfplumber
+Pillow
+python-dotenv
