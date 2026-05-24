@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 import os
+
 # تعطيل ميزة التتبع (Telemetry) في ChromaDB لتجنب أخطاء OpenTelemetry
 os.environ["CHROMA_TELEMETRY"] = "False"
 
@@ -9,7 +10,6 @@ from sentence_transformers import SentenceTransformer
 from groq import Groq
 import re
 import streamlit as st
-
 
 # CONFIG
 
@@ -49,7 +49,6 @@ GROQ_API_KEY = get_groq_api_key()
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 
-
 # LANGUAGE DETECTION
 
 def detect_language(text: str) -> str:
@@ -61,7 +60,6 @@ MESSAGES = {
     "ar": "❌ هذه المعلومة غير متوفرة ضمن بيانات النظام. حاول سؤالاً آخر.",
     "en": "❌ This information is not available in the system data. Please try another question."
 }
-
 
 # DOMAIN FILTERING (CAFE KEYWORDS)
 
@@ -91,7 +89,6 @@ def is_cafe_related(items, min_keyword_ratio=0.65):
     ratio = keyword_count / len(items)
     print(f"[DEBUG] Cafe keyword ratio: {ratio:.2f}")
     return ratio >= min_keyword_ratio
-
 
 
 # TRANSLATION MAPPING (FOR COMMON PHRASES IN EMPLOYEE GUIDE)
@@ -137,7 +134,6 @@ def translate_context(text: str) -> str:
     return text
 
 
-
 # SYSTEM PROMPT (STRICT)
 
 SYSTEM_MESSAGE = """
@@ -155,24 +151,55 @@ RULES:
 """
 
 
-
-# LOAD MODELS & CHROMA (WITH STREAMLIT CACHING)
+# LOAD MODELS & CHROMA (WITH STREAMLIT CACHING + AUTO-BUILD)
 
 @st.cache_resource
 def load_resources():
     print(f"📥 Loading embedding model '{MODEL_NAME}' from Hugging Face...")
     model = SentenceTransformer(MODEL_NAME)
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+
     try:
         collection = client.get_collection(COLLECTION_NAME)
-    except Exception as e:
-        raise RuntimeError(f"Collection '{COLLECTION_NAME}' not found. Run vector_store.py first.") from e
+        print("✅ Collection found.")
+    except Exception:
+        print("⚠️ Collection not found. Building vector database from scratch (this may take a few minutes)...")
+        st.warning("⚠️ جاري بناء قاعدة المعرفة لأول مرة. قد يستغرق هذا بضع دقائق.")
+
+        # استيراد دوال معالجة PDFs
+        from processed_data import process_all_pdfs
+
+        # 1. معالجة جميع ملفات PDF إلى أجزاء (chunks)
+        all_results = process_all_pdfs(max_words=50, show_raw_once=False)
+
+        # 2. إنشاء مجموعة جديدة
+        collection = client.create_collection(name=COLLECTION_NAME)
+
+        # 3. إضافة الأجزاء إلى قاعدة المتجهات
+        for name, chunks in [
+            ("menu", all_results.get("menu.pdf", [])),
+            ("recipes", all_results.get("recipes.pdf", [])),
+            ("employee", all_results.get("employee_guide.pdf", [])),
+            ("faq", all_results.get("smart_cafe_faq.pdf", []))
+        ]:
+            if chunks:
+                # إضافة البادئة "passage: " لكل نص قبل التضمين (مطلوب لنموذج e5)
+                texts_with_prefix = [f"passage: {c['text']}" for c in chunks]
+                embeddings = model.encode(texts_with_prefix, normalize_embeddings=True).tolist()
+                ids = [f"{name}_{c['metadata']['global_chunk_index']}" for c in chunks]
+                documents = [c["text"] for c in chunks]
+                metadatas = [c["metadata"] for c in chunks]
+                collection.upsert(ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas)
+                print(f"✔ Added {len(chunks)} chunks from {name}")
+
+        print("✅ Vector database built successfully.")
+        st.success("✅ تم بناء قاعدة المعرفة بنجاح.")
+
     print("✅ Resources loaded (model cached).")
     return model, collection
 
 
 embedding_model, collection = load_resources()
-
 
 
 # RETRIEVAL FUNCTIONS
@@ -295,7 +322,6 @@ def save_history(query, answer):
         f.write(f"A: {answer}\n\n")
 
 
-
 # MAIN RAG TOOL
 
 def rag_tool(query: str) -> str:
@@ -317,7 +343,6 @@ def rag_tool(query: str) -> str:
         error_msg = f"⚠️ RAG error: {str(e)}"
         save_history(query, error_msg)
         return error_msg
-
 
 
 # INTERACTIVE LOOP (for testing only)
