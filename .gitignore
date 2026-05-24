@@ -28,6 +28,7 @@ api_key.txt
 outputs/
 logs/
 *.log
+chroma_db/
 
 # Data files that are generated (customer orders)
 data/csv/customers_orders.csv
