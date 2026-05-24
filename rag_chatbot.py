@@ -1,10 +1,13 @@
 from pathlib import Path
 from datetime import datetime
+import os
+# تعطيل ميزة التتبع (Telemetry) في ChromaDB لتجنب أخطاء OpenTelemetry
+os.environ["CHROMA_TELEMETRY"] = "False"
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 from groq import Groq
 import re
-import os
 import streamlit as st
 
 
