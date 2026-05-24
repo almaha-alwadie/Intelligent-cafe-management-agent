@@ -1,12 +1,7 @@
 import streamlit as st
-from datetime import datetime
-import pandas as pd
-import plotly.express as px
-from pathlib import Path
-from agent import run_agent, inventory_tool
-from PIL import Image
 
-# PAGE CONFIG
+
+# PAGE CONFIG (يجب أن يكون أول أمر Streamlit)
 
 st.set_page_config(
     page_title="Blue Cafe ",
@@ -14,6 +9,14 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+from datetime import datetime
+import pandas as pd
+import plotly.express as px
+from pathlib import Path
+from agent import run_agent, inventory_tool
+from PIL import Image
+
 
 # SESSION STATE INIT
 
