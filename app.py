@@ -626,7 +626,7 @@ with st.sidebar:
                 if st.button(get_text("confirm_order"), use_container_width=True):
                     if customer_name:
                         order_id = save_order(customer_name, st.session_state.cart, payment_method.lower())
-                        st.success(get_text("order_success").format(order_id, total_amount))
+                        st.toast(get_text("order_success").format(order_id, total_amount), icon="✅")
                         st.session_state.cart = []
                         st.rerun()
                     else:
