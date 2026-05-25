@@ -1,8 +1,6 @@
 import streamlit as st
 
-
 # PAGE CONFIG (يجب أن يكون أول أمر Streamlit)
-
 st.set_page_config(
     page_title="Blue Cafe ",
     page_icon="☕",
@@ -19,7 +17,6 @@ from PIL import Image
 
 
 # SESSION STATE INIT
-
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "role" not in st.session_state:
@@ -42,14 +39,12 @@ if "next_order_id" not in st.session_state:
     st.session_state.next_order_id = 1
 
 # CREDENTIALS
-
 CREDENTIALS = {
     "manager": {"username": "admin", "password": "admin123"},
     "staff": {"username": "staff", "password": "staff123"}
 }
 
 # PATHS & DATA FILES
-
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -68,9 +63,7 @@ if not SALES_PATH.exists():
     pd.DataFrame(columns=["item", "quantity"]).to_csv(SALES_PATH, index=False)
 
 
-
-#  عرض التقييمات للعميل
-
+# عرض التقييمات للعميل
 def get_product_ratings():
     """تحسب متوسط التقييم لكل منتج من ملف reviews.csv"""
     if not REVIEWS_PATH.exists():
@@ -217,7 +210,6 @@ except ImportError:
 
 
 # LOCALIZATION
-
 def get_text(key):
     texts = {
         "en": {
@@ -241,7 +233,6 @@ def get_text(key):
             "update_stock_btn": "🔄 Update Stock",
             "clear_chat": "🧹 Clear Chat",
             "logout": "🚪 Logout",
-            "tips_title": "📘 Quick Tips",
             "dark_mode": "🌙 Dark Mode",
             "download_report": "📥 Download Inventory Report",
             "login_title": "☕ Blue Cafe",
@@ -296,7 +287,8 @@ def get_text(key):
             "your_name": "Your name",
             "rating_summary": "Rating (avg)",
             "reviews_count": "reviews",
-            "no_ratings_available": "No ratings available yet."
+            "no_ratings_available": "No ratings available yet.",
+            "click_to_open": "👆 Click below to open the control panel"
         },
         "ar": {
             "app_title": "☕ بلو كافيه ",
@@ -319,7 +311,6 @@ def get_text(key):
             "update_stock_btn": "🔄 تحديث المخزون",
             "clear_chat": "🧹 مسح المحادثة",
             "logout": "🚪 تسجيل الخروج",
-            "tips_title": "📘 نصائح سريعة",
             "dark_mode": "🌙 الوضع الليلي",
             "download_report": "📥 تحميل تقرير المخزون",
             "login_title": "☕ بلو كافيه",
@@ -374,28 +365,133 @@ def get_text(key):
             "your_name": "اسمك",
             "rating_summary": "التقييم (متوسط)",
             "reviews_count": "مراجعة",
-            "no_ratings_available": "لا توجد تقييمات متاحة بعد."
+            "no_ratings_available": "لا توجد تقييمات متاحة بعد.",
+            "click_to_open": "👆 اضغط أدناه لفتح لوحة التحكم"
         }
     }
     return texts[st.session_state.language].get(key, key)
 
 
+# DIALOGS
+@st.experimental_dialog("📦 Inventory Report", width="large")
+def show_inventory_dialog():
+    with st.spinner(get_text("fetching")):
+        res = run_agent("check inventory")
+        st.markdown(
+            f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; font-family: monospace;">{res.replace(chr(10), "<br>")}</div>',
+            unsafe_allow_html=True
+        )
 
-# CSS (RTL/LTR + DARK MODE)
+@st.experimental_dialog("📊 Sales Report", width="large")
+def show_sales_dialog():
+    with st.spinner(get_text("fetching")):
+        res = run_agent("sales report")
+        st.markdown(
+            f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; font-family: monospace;">{res.replace(chr(10), "<br>")}</div>',
+            unsafe_allow_html=True
+        )
 
+@st.experimental_dialog("⭐ Reviews Report", width="large")
+def show_reviews_dialog():
+    with st.spinner(get_text("fetching")):
+        res = run_agent("show reviews")
+        st.markdown(
+            f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; font-family: monospace;">{res.replace(chr(10), "<br>")}</div>',
+            unsafe_allow_html=True
+        )
+
+@st.experimental_dialog("🔄 Update Stock", width="large")
+def show_update_stock_dialog():
+    with st.spinner(get_text("inventory_updating")):
+        res = run_agent("update inventory")
+        st.markdown(
+            f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; font-family: monospace;">{res.replace(chr(10), "<br>")}</div>',
+            unsafe_allow_html=True
+        )
+
+
+#  دالة لتنسيق مخططات Plotly
+def get_plotly_layout_theme():
+    """ترجع تنسيق مناسب للمخطط حسب الوضع (ليلي/نهاري) واللغة"""
+    if st.session_state.dark_mode:
+        layout = dict(
+            template="plotly_dark",
+            paper_bgcolor="#0f172a",    # نفس خلفية الوضع الليلي
+            plot_bgcolor="#1e293b",     # خلفية منطقة الرسم
+            font=dict(color="#e2e8f0", family="Segoe UI"),
+            title_font=dict(color="#38bdf8"),
+            legend=dict(
+                bgcolor="rgba(30,41,59,0.8)",
+                bordercolor="#334155",
+                font=dict(color="#e2e8f0")
+            ),
+            xaxis=dict(
+                title_font=dict(color="#94a3b8"),
+                tickfont=dict(color="#cbd5e1"),
+                gridcolor="#334155",
+                linecolor="#475569"
+            ),
+            yaxis=dict(
+                title_font=dict(color="#94a3b8"),
+                tickfont=dict(color="#cbd5e1"),
+                gridcolor="#334155",
+                linecolor="#475569"
+            ),
+            colorway=px.colors.sequential.Blues  # تدرجات زرقاء
+        )
+    else:
+        layout = dict(
+            template="plotly_white",
+            paper_bgcolor="rgba(0,0,0,0)",   # شفاف ليتناسب مع الخلفية المتدرجة
+            plot_bgcolor="rgba(255,255,255,0.8)",
+            font=dict(color="#1e293b", family="Segoe UI"),
+            title_font=dict(color="#0ea5e9"),
+            legend=dict(
+                bgcolor="rgba(255,255,255,0.6)",
+                bordercolor="#e2e8f0",
+                font=dict(color="#1e293b")
+            ),
+            xaxis=dict(
+                title_font=dict(color="#334155"),
+                tickfont=dict(color="#475569"),
+                gridcolor="#e2e8f0",
+                linecolor="#cbd5e1"
+            ),
+            yaxis=dict(
+                title_font=dict(color="#334155"),
+                tickfont=dict(color="#475569"),
+                gridcolor="#e2e8f0",
+                linecolor="#cbd5e1"
+            ),
+            colorway=px.colors.sequential.Blues_r  # تدرجات زرقاء فاتحة
+        )
+    return layout
+
+
+#  CSS
 def load_css():
     if st.session_state.dark_mode:
-        bg_color = "#1e1e2f"
-        text_color = "#ffffff"
-        bot_bg = "#3a3a4a"
-        user_bg = "#4a6fa5"
-        sidebar_bg = "#252536"
+        bg_color = "#0f172a"
+        text_color = "#e2e8f0"
+        bot_bg = "#1e293b"
+        user_bg = "#3b82f6"
+        sidebar_bg = "#0f172a"
+        card_bg = "#1e293b"
+        border_color = "#334155"
+        button_bg = "#3b82f6"
+        button_hover = "#60a5fa"
+        accent_text = "#38bdf8"
     else:
         bg_color = "linear-gradient(135deg, #eef2ff 0%, #d9e4f5 100%)"
         text_color = "#1e293b"
         bot_bg = "#ffffff"
-        user_bg = "#3182ce"
+        user_bg = "#3b82f6"
         sidebar_bg = "#f8fafc"
+        card_bg = "#ffffff"
+        border_color = "#e2e8f0"
+        button_bg = "#3b82f6"
+        button_hover = "#2563eb"
+        accent_text = "#0ea5e9"
 
     direction = "rtl" if st.session_state.language == "ar" else "ltr"
     align = "right" if st.session_state.language == "ar" else "left"
@@ -437,7 +533,7 @@ def load_css():
     }}
     .subtitle {{
         font-size: 1rem;
-        color: #2c5282;
+        color: {accent_text};
         text-align: {align};
         margin-bottom: 1rem;
     }}
@@ -453,6 +549,7 @@ def load_css():
         max-width: 75%;
         margin-left: auto;
         text-align: {align};
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }}
     .bot-box {{
         background: {bot_bg};
@@ -461,34 +558,71 @@ def load_css():
         border-radius: {bot_radius};
         margin-bottom: 16px;
         max-width: 85%;
-        border: 1px solid #ddd;
+        border: 1px solid {border_color};
         text-align: {align};
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }}
     div.stButton > button {{
-        background-color: #2c5282;
+        background-color: {button_bg};
         color: white;
         border-radius: 40px;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }}
+    div.stButton > button:hover {{
+        background-color: {button_hover};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }}
+    div.stButton > button:active {{
+        transform: translateY(0);
+    }}
+    .stDownloadButton > button {{
+        background-color: {button_bg};
+        border-radius: 40px;
+    }}
+    .stTextInput > div > div > input {{
+        border-radius: 40px;
+        border: 1px solid {border_color};
+        padding: 0.5rem 1rem;
+    }}
+    .stSelectbox > div > div {{
+        border-radius: 40px;
+    }}
+    .streamlit-expanderHeader {{
+        background-color: {card_bg};
+        border-radius: 40px;
+        border: 1px solid {border_color};
+    }}
+    .stAlert {{
+        border-radius: 16px;
+        border-right: 4px solid {button_bg};
+    }}
+    footer {{
+        color: {text_color};
+        opacity: 0.7;
     }}
     </style>
     """, unsafe_allow_html=True)
 
 
-# BANNER (مع تعديل use_container_width إلى use_column_width)
-
+# BANNER
 def show_banner(image_path: Path, default_url: str):
     if image_path.exists():
         try:
             img = Image.open(image_path)
-            st.image(img, use_column_width=True)  # تم التعديل
+            st.image(img, use_column_width=True)
             return True
         except Exception as e:
             st.warning(f"Local image could not be loaded: {e}. Using online image instead.")
-    st.image(default_url, use_column_width=True)  # تم التعديل
+    st.image(default_url, use_column_width=True)
     return False
 
 
 # LOGIN SCREEN
-
 def login_screen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -543,7 +677,6 @@ def login_screen():
 
 
 # MAIN APP
-
 if not st.session_state.authenticated:
     login_screen()
 
@@ -554,7 +687,6 @@ st.markdown(f'<div class="subtitle">{get_text("subtitle")} | {get_text(f"welcome
             unsafe_allow_html=True)
 
 # AUTO INVENTORY
-
 if st.session_state.role == "manager" and not st.session_state.auto_inventory_ran:
     with st.spinner(get_text("auto_running")):
         result = inventory_tool(create_orders=True, lang=st.session_state.language)
@@ -562,7 +694,6 @@ if st.session_state.role == "manager" and not st.session_state.auto_inventory_ra
         st.session_state.auto_inventory_ran = True
 
 # MANAGER DASHBOARD
-
 if st.session_state.role == "manager":
     st.markdown(f"## {get_text('manager_dashboard')}")
     if st.session_state.auto_inventory_result:
@@ -590,15 +721,12 @@ if st.session_state.role == "manager":
         if st.session_state.language == "ar":
             top_sales['item'] = top_sales['item'].apply(translate_product_name)
         fig = px.bar(top_sales, x="item", y="quantity", title=get_text("top_selling_title"), color="quantity")
-        fig.update_layout(
-            xaxis_title=get_text("product"),
-            yaxis_title=get_text("qty_label"),
-            font=dict(size=12)
-        )
+        # تطبيق تنسيق الوضع المظلم/الفاتح
+        layout_theme = get_plotly_layout_theme()
+        fig.update_layout(**layout_theme)
         st.plotly_chart(fig, use_container_width=True)
 
 # CHAT INTERFACE
-
 st.markdown(f"### {get_text('ask_assistant')}")
 col1, col2 = st.columns([4, 1])
 with col1:
@@ -633,17 +761,18 @@ for msg in reversed(st.session_state.chat):
         f'<div class="bot-box">🤖 {get_text("bot_label")} · {msg["time"]}<br>{msg["bot"].replace(chr(10), "<br>")}</div>',
         unsafe_allow_html=True)
 
-# SIDEBAR
 
-with st.sidebar:
-    st.markdown(f"### {get_text('sidebar_control')}")
+# لوحة التحكم القابلة للطي
+st.caption(get_text("click_to_open"))
 
+with st.expander("⚙️ " + get_text("sidebar_control") + " - " + ("click to open/close" if st.session_state.language == "en" else "اضغط لفتح / غلق"), expanded=False):
+    # زر الوضع الليلي
     if st.button(get_text("dark_mode"), use_container_width=True):
         st.session_state.dark_mode = not st.session_state.dark_mode
         st.rerun()
     st.markdown("---")
 
-    # CUSTOMER (مع عرض متوسط التقييمات بدلاً من المراجعات الكاملة)
+    # CUSTOMER
     if st.session_state.role == "customer":
         st.subheader(get_text("customer_orders"))
         customer_name = st.text_input(get_text("your_name"), key="cust_name")
@@ -671,8 +800,7 @@ with st.sidebar:
         else:
             cart_display = []
             for item in st.session_state.cart:
-                display_name = translate_product_name(item["item"]) if st.session_state.language == "ar" else item[
-                    "item"]
+                display_name = translate_product_name(item["item"]) if st.session_state.language == "ar" else item["item"]
                 cart_display.append({
                     get_text("item"): display_name,
                     get_text("quantity"): item["quantity"],
@@ -703,21 +831,15 @@ with st.sidebar:
         st.markdown(f"### {get_text('reviews_btn')}")
         display_ratings_for_customer()
 
-    # STAFF (يرى المراجعات الكاملة)
+    # STAFF
     elif st.session_state.role == "staff":
         st.markdown(f"### {get_text('staff_buttons')}")
         if st.button(get_text("inventory_btn"), use_container_width=True):
-            with st.spinner(get_text("fetching")):
-                res = run_agent("check inventory")
-                st.code(res, language="text")
+            show_inventory_dialog()
         if st.button(get_text("sales_btn"), use_container_width=True):
-            with st.spinner(get_text("fetching")):
-                res = run_agent("sales report")
-                st.code(res, language="text")
+            show_sales_dialog()
         if st.button(get_text("reviews_btn"), use_container_width=True):
-            with st.spinner(get_text("fetching")):
-                res = run_agent("show reviews")
-                st.code(res, language="text")
+            show_reviews_dialog()
         st.markdown("---")
         st.markdown(f"### {get_text('orders_board')}")
         orders_df = pd.read_csv(CUSTOMERS_ORDERS_PATH)
@@ -740,28 +862,20 @@ with st.sidebar:
                     st.success(get_text("order_completed_success").format(order_id))
                     st.rerun()
 
-    # MANAGER (يرى المراجعات الكاملة)
+    # MANAGER
     else:
         st.markdown(f"### {get_text('staff_buttons')}")
         col_a, col_b = st.columns(2)
         with col_a:
             if st.button(get_text("inventory_btn"), use_container_width=True):
-                with st.spinner(get_text("fetching")):
-                    res = run_agent("check inventory")
-                    st.code(res, language="text")
+                show_inventory_dialog()
         with col_b:
             if st.button(get_text("sales_btn"), use_container_width=True):
-                with st.spinner(get_text("fetching")):
-                    res = run_agent("sales report")
-                    st.code(res, language="text")
+                show_sales_dialog()
         if st.button(get_text("reviews_btn"), use_container_width=True):
-            with st.spinner(get_text("fetching")):
-                res = run_agent("show reviews")
-                st.code(res, language="text")
+            show_reviews_dialog()
         if st.button(get_text("update_stock_btn"), use_container_width=True):
-            with st.spinner(get_text("inventory_updating")):
-                res = run_agent("update inventory")
-                st.code(res, language="text")
+            show_update_stock_dialog()
         st.markdown("---")
         if st.button(get_text("run_auto_again"), use_container_width=True):
             with st.spinner(get_text("re_running")):
@@ -791,6 +905,4 @@ with st.sidebar:
         st.session_state.cart = []
         st.rerun()
 
-    st.markdown("---")
-    st.caption(get_text("tips_title"))
     st.caption("© Blue Cafe ")
