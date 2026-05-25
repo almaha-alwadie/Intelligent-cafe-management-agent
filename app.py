@@ -491,7 +491,33 @@ def load_css():
     </style>
     """, unsafe_allow_html=True)
 
-
+# Add text next to the menu button on mobile
+def add_sidebar_toggle_label():
+    """إضافة نص بجانب زر القائمة (☰) على الجوال: لوحة التحكم / Control Panel"""
+    label = "لوحة التحكم" if st.session_state.language == "ar" else "Control Panel"
+    st.markdown(f"""
+    <style>
+    /* استهداف زر فتح الشريط الجانبي على الجوال فقط */
+    @media (max-width: 768px) {{
+        button[aria-label="Open sidebar"] {{
+            position: relative;
+        }}
+        button[aria-label="Open sidebar"]::after {{
+            content: "{label}";
+            position: absolute;
+            left: 40px;  /* بجانب الأيقونة */
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            color: inherit;
+            font-size: 1rem;
+            white-space: nowrap;
+            font-weight: 500;
+            pointer-events: none;
+        }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 # ------------------- BANNER & LOGIN -------------------
 def show_banner(image_path: Path, default_url: str):
     if image_path.exists():
@@ -552,6 +578,7 @@ if not st.session_state.authenticated:
     login_screen()
 
 load_css()
+add_sidebar_toggle_label()
 
 # Header
 st.markdown(f'<div class="title">{get_text("app_title")}</div>', unsafe_allow_html=True)
@@ -738,8 +765,7 @@ if send and query and not st.session_state.processing:
 
 st.markdown("---")
 st.markdown(f"## {get_text('chat_title')}")
-if not st.session_state.chat:
-    st.info(get_text("chat_initial_msg"))
+
 for msg in reversed(st.session_state.chat):
     st.markdown(f'<div class="user-box">👤 {get_text("user_label")} · {msg["time"]}<br>{msg["user"]}</div>',
                 unsafe_allow_html=True)
