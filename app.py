@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="Blue Cafe",
     page_icon="☕︎",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 from datetime import datetime
@@ -15,7 +15,7 @@ from pathlib import Path
 from agent import run_agent, inventory_tool
 from PIL import Image
 
-#  SESSION STATE
+# ------------------- SESSION STATE -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "role" not in st.session_state:
@@ -37,13 +37,13 @@ if "cart" not in st.session_state:
 if "next_order_id" not in st.session_state:
     st.session_state.next_order_id = 1
 
-#  CREDENTIALS
+# ------------------- CREDENTIALS -------------------
 CREDENTIALS = {
     "manager": {"username": "admin", "password": "admin123"},
     "staff": {"username": "staff", "password": "staff123"}
 }
 
-#  PATHS & DATA FILES
+# ------------------- PATHS & DATA FILES -------------------
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -60,7 +60,7 @@ if not CUSTOMERS_ORDERS_PATH.exists():
 if not SALES_PATH.exists():
     pd.DataFrame(columns=["item", "quantity"]).to_csv(SALES_PATH, index=False)
 
-#  PRODUCTS & TRANSLATIONS
+# ------------------- PRODUCTS & TRANSLATIONS -------------------
 MENU_ITEMS_EN = {
     "Espresso": 2.00, "Americano": 2.50, "Cappuccino": 3.50,
     "Latte": 3.75, "Mocha": 4.00, "Iced Americano": 3.00,
@@ -101,7 +101,7 @@ def translate_product_name(name):
     return PRODUCT_TRANSLATIONS.get(name, name)
 
 
-#  DATA FUNCTIONS
+# ------------------- DATA FUNCTIONS -------------------
 def update_sales(item, quantity):
     sales_df = pd.read_csv(SALES_PATH)
     if item in sales_df['item'].values:
@@ -165,6 +165,7 @@ def get_product_ratings():
     return ratings.to_dict(orient="index")
 
 
+
 def display_ratings_for_customer():
     ratings = get_product_ratings()
     if not ratings:
@@ -173,7 +174,7 @@ def display_ratings_for_customer():
     product_label = get_text("product")
     rating_label = get_text("rating_summary")
     data = []
-    for idx, (product, info) in enumerate(ratings.items(), start=1):
+    for product, info in ratings.items():
         avg = info["mean"]
         count = info["count"]
         stars = "⭐" * int(avg)
@@ -183,15 +184,18 @@ def display_ratings_for_customer():
             stars = "☆☆☆☆☆"
         rating_text = f"{stars} {avg:.1f}/5 ({count} {get_text('reviews_count')})"
         display_name = PRODUCT_TRANSLATIONS.get(product, product) if st.session_state.language == "ar" else product
-        data.append({"#": idx, product_label: display_name, rating_label: rating_text})
-    st.table(pd.DataFrame(data))
+        data.append({product_label: display_name, rating_label: rating_text})
+    df = pd.DataFrame(data)
+    # جعل الفهرس يبدأ من 1 بدلاً من 0
+    df.index = range(1, len(df) + 1)
+    st.table(df)
 
 
-#  LOCALIZATION
+# ------------------- LOCALIZATION -------------------
 def get_text(key):
     texts = {
         "en": {
-            "app_title": "☕︎Blue Cafe",
+            "app_title": "☕︎ Blue Cafe",
             "subtitle": "Intelligent cafe management",
             "welcome_customer": "Customer",
             "welcome_staff": "Staff",
@@ -348,7 +352,7 @@ def get_text(key):
     return texts[st.session_state.language].get(key, key)
 
 
-#  DIALOGS
+# ------------------- DIALOGS -------------------
 @st.experimental_dialog("📦 Inventory Report", width="large")
 def show_inventory_dialog():
     with st.spinner(get_text("fetching")):
@@ -385,7 +389,7 @@ def show_update_stock_dialog():
             unsafe_allow_html=True)
 
 
-#  PLOTLY THEME
+# ------------------- PLOTLY THEME -------------------
 def get_plotly_layout_theme():
     if st.session_state.dark_mode:
         return dict(
@@ -413,7 +417,7 @@ def get_plotly_layout_theme():
         )
 
 
-#  CSS
+# ------------------- CSS -------------------
 def load_css():
     if st.session_state.dark_mode:
         bg_color = "#0f172a"
@@ -543,7 +547,7 @@ def login_screen():
     st.stop()
 
 
-#  MAIN APP
+# ------------------- MAIN APP -------------------
 if not st.session_state.authenticated:
     login_screen()
 
@@ -554,9 +558,8 @@ st.markdown(f'<div class="title">{get_text("app_title")}</div>', unsafe_allow_ht
 st.markdown(f'<div class="subtitle">{get_text("subtitle")} | {get_text(f"welcome_{st.session_state.role}")}</div>',
             unsafe_allow_html=True)
 
-#  SIDEBAR
+# ------------------- SIDEBAR  -------------------
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2331/2331968.png", width=80)
     st.markdown(f"### {get_text('sidebar_control')}")
 
     if st.button(get_text("dark_mode"), use_container_width=True):
@@ -676,7 +679,7 @@ with st.sidebar:
         st.rerun()
     st.caption("© Blue Cafe")
 
-#  MAIN CONTENT: Manager Dashboard
+# ------------------- MAIN CONTENT: Manager Dashboard -------------------
 if st.session_state.role == "manager" and not st.session_state.auto_inventory_ran:
     with st.spinner(get_text("auto_running")):
         result = inventory_tool(create_orders=True, lang=st.session_state.language)
@@ -710,7 +713,7 @@ if st.session_state.role == "manager":
         fig.update_layout(**get_plotly_layout_theme())
         st.plotly_chart(fig, use_container_width=True)
 
-#  CHAT INTERFACE
+# ------------------- CHAT INTERFACE -------------------
 st.markdown(f"### {get_text('ask_assistant')}")
 col1, col2 = st.columns([4, 1])
 with col1:
