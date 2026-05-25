@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 
 # PAGE CONFIG
 st.set_page_config(
@@ -186,7 +187,6 @@ def display_ratings_for_customer():
         display_name = PRODUCT_TRANSLATIONS.get(product, product) if st.session_state.language == "ar" else product
         data.append({product_label: display_name, rating_label: rating_text})
     df = pd.DataFrame(data)
-    # جعل الفهرس يبدأ من 1 بدلاً من 0
     df.index = range(1, len(df) + 1)
     st.table(df)
 
@@ -491,33 +491,7 @@ def load_css():
     </style>
     """, unsafe_allow_html=True)
 
-# Add text next to the menu button on mobile
-def add_sidebar_toggle_label():
-    """إضافة نص بجانب زر القائمة (☰) على الجوال: لوحة التحكم / Control Panel"""
-    label = "لوحة التحكم" if st.session_state.language == "ar" else "Control Panel"
-    st.markdown(f"""
-    <style>
-    /* استهداف زر فتح الشريط الجانبي على الجوال فقط */
-    @media (max-width: 768px) {{
-        button[aria-label="Open sidebar"] {{
-            position: relative;
-        }}
-        button[aria-label="Open sidebar"]::after {{
-            content: "{label}";
-            position: absolute;
-            left: 40px;  /* بجانب الأيقونة */
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            color: inherit;
-            font-size: 1rem;
-            white-space: nowrap;
-            font-weight: 500;
-            pointer-events: none;
-        }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+
 # ------------------- BANNER & LOGIN -------------------
 def show_banner(image_path: Path, default_url: str):
     if image_path.exists():
@@ -578,7 +552,6 @@ if not st.session_state.authenticated:
     login_screen()
 
 load_css()
-add_sidebar_toggle_label()
 
 # Header
 st.markdown(f'<div class="title">{get_text("app_title")}</div>', unsafe_allow_html=True)
@@ -626,8 +599,9 @@ with st.sidebar:
                 if st.button(get_text("confirm_order"), use_container_width=True):
                     if customer_name:
                         order_id = save_order(customer_name, st.session_state.cart, payment_method.lower())
-                        st.toast(get_text("order_success").format(order_id, total_amount), icon="✅")
+                        st.success(get_text("order_success").format(order_id, total_amount))  # ✅ st.success مع تأخير
                         st.session_state.cart = []
+                        time.sleep(3)
                         st.rerun()
                     else:
                         st.error(get_text("name_required"))
